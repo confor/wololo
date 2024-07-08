@@ -1,0 +1,17 @@
+{
+  "name": "server",
+  "version": "0.1.0",
+  "description": "my api server",
+  "main": "index.js",
+  "author": "lducci18@alumnos.utalca.cl",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "@fastify/cors": "^9.0.1",
+    "@influxdata/influxdb-client": "^1.33.2",
+    "fastify": "^4.28.1"
+  }
+}

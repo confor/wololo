@@ -1,0 +1,32 @@
+{
+	"influx": {
+		"connection": {
+			"url": "http://localhost:8086",
+			"token": "hola",
+			"timeout": 10000
+		},
+
+		"org": "queso",
+		"bucket": "iot_sensors"
+	},
+
+	"costs": {
+		"TARIFA": "BT-1",
+		"CARGO FIJO MENSUAL": {
+			"ARRIENDO DE MEDIDOR": 395.0
+		},
+		"TRANSPORTE DE ELECTRICIDAD": {
+			"CARGO POR USO DEL SISTEMA DE TRANSMISION": 23.351,
+			"CARGO POR SERVICIO PÚBLICO": 0.750
+		},
+		"ELECTRICIDAD CONSUMIDA": {
+			"CARGO POR ENERGÍA": 93.964,
+			"CARGO POR COMPRAS DE POTENCIA": 21.519,
+			"CARGO POR POTENCIA BASE": 31.696
+		},
+		"LIMITE DE INVIERNO": {
+			"CONSUMO": 430,
+			"MULTIPLICADOR": 0.20
+		}
+	}
+}
