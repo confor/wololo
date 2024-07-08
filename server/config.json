@@ -10,7 +10,7 @@
 		"bucket": "iot_sensors"
 	},
 
-	"costs": {
+	"pricing": {
 		"TARIFA": "BT-1",
 		"CARGO FIJO MENSUAL": {
 			"ARRIENDO DE MEDIDOR": 395.0

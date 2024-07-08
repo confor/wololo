@@ -2,7 +2,7 @@ import fs from 'fs';
 import config from "./config.json";
 
 function kWh_to_CLP(reading) {
-	const i = config.costs;
+	const i = config.pricing;
 	const j = i['LIMITE DE INVIERNO'];
 	const k = i['TRANSPORTE DE ELECTRICIDAD'];
 	const l = i['ELECTRICIDAD CONSUMIDA'];

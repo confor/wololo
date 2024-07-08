@@ -8,12 +8,8 @@ import { DetailsTable } from './components/table';
 import { download, post } from './fetch';
 const $ = n => document.querySelector(n);
 
-const root = $('#app');
 let dTable = null;
-const realdTable = <DetailsTable ref={inst => dTable = inst}></DetailsTable>
-console.log('d', dTable, 'real', realdTable);
-render(realdTable, root);
-
+render(<DetailsTable ref={inst => dTable = inst}></DetailsTable>, $('#app'));
 
 // date picker
 const dp = new DatePicker('#checkin', '#checkout');
@@ -85,20 +81,21 @@ async function downloadData(type) {
 	const data = [];
 
 	for (const item of body.data) {
-		labels.push(item.time);
+		labels.push(type === 'recent' ? item.time : item.date);
 		data.push(item.delta);
 	}
 
 	myGraph.updateData(labels, data);
 	dTable.setItems(body.data);
-}
 
-function formatDate(date) {
-	const year = date.getFullYear();
-	const month = String(date.getMonth() + 1).padStart(2, '0');
-	const day = String(date.getDate()).padStart(2, '0');
+	let item0 = body.data[0],
+		itemX = body.data[body.data.length - 1];
 
-	return `${year}-${month}-${day}`;
+	let cost = body.data.map(n => n.price).reduce((a, b) => a+b);
+
+	$('#card-reading').textContent = itemX.kWh + ' kWh';
+	$('#card-delta').textContent = (itemX.kWh - item0.kWh).toFixed(1) + ' kWh';
+	$('#card-cost').textContent = '$' + cost;
 }
 
 async function downloadRange(start, end) {

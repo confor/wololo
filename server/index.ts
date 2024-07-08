@@ -19,8 +19,15 @@ fastify.get('/update', async (request, reply) => {
 	return data.length;
 });
 
+fastify.get('/pricing', async (request, reply) => {
+	return {
+		'kWh': kWh_to_CLP(1),
+		'details': config.pricing
+	}
+});
+
 const routes = {
-	'/data/recent': [ '-2d', 'hourly', '1h', 'mean' ],
+	'/data/recent': [ '-25h', 'hourly', '1h', 'mean' ],
 	'/data/month': [ '-32d', 'daily', '24h', 'mean' ],
 	'/data/all': [ '0', 'daily', '24h', 'mean' ],
 };
