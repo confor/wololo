@@ -1,0 +1,5 @@
+node_modules/
+*.ods
+*.lock
+*.map
+fucked*

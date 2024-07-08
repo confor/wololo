@@ -1,0 +1,11 @@
+{
+  "name": "frontend",
+  "version": "0.1.0",
+  "main": "index.html",
+  "dependencies": {
+    "@easepick/core": "^1.2.1",
+    "@easepick/range-plugin": "^1.2.1",
+    "chart.js": "^4.4.3",
+    "preact": "^10.22.0"
+  }
+}
