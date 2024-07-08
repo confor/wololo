@@ -1,18 +1,13 @@
-import { InfluxDB, Point } from '@influxdata/influxdb-client';
-import config from "./config.json";
-import schema from "./schema.json";
-
-import { kWh_to_CLP, tsv_to_lines, query } from './utilities';
-
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
+import { InfluxDB, Point } from '@influxdata/influxdb-client';
 
-const fastify = Fastify({
-	logger: true
-});
+import config from "./config.json";
+import schema from "./schema.json";
+import { kWh_to_CLP, tsv_to_lines, query } from './utilities';
 
+const fastify = Fastify({ logger: true });
 await fastify.register(cors);
-
 const client = new InfluxDB(config.influx.connection);
 
 fastify.get('/update', async (request, reply) => {
@@ -24,92 +19,43 @@ fastify.get('/update', async (request, reply) => {
 	return data.length;
 });
 
-fastify.get('/data/recent', async (req, reply) => {
-	const flux = `
-		from(bucket: "iot_sensors")
-		  |> range(start: -2d)
-		  |> filter(fn: (r) => r["_measurement"] == "readings")
-		  |> filter(fn: (r) => r["_field"] == "delta" or r["_field"] == "kWh")
-		  |> filter(fn: (r) => r["type"] == "electricity_hourly")
-		  |> aggregateWindow(every: 1h, fn: mean, createEmpty: false)
-		  |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
-		  |> yield(name: "readings")
-	`;
+const routes = {
+	'/data/recent': [ '-2d', 'hourly', '1h', 'mean' ],
+	'/data/month': [ '-32d', 'daily', '24h', 'mean' ],
+	'/data/all': [ '0', 'daily', '24h', 'mean' ],
+};
 
-	const response = await query(client, flux);
-	const data = response.map(row => {
-		return {
-			date: row._time.split('T')[0],
-			time: row._time.split('T')[1].split(':').slice(0, 2).join(':'),
-			kWh: row.kWh,
-			delta: parseFloat(row.delta.toFixed(6)),
-			price: parseInt(kWh_to_CLP(row.delta).toFixed(0)),
-		}
+for (const [ route, params ] of Object.entries(routes)) {
+	fastify.get(route, async (req, reply) => {
+		const flux = `
+			from(bucket: "iot_sensors")
+			  |> range(start: ${params[0]})
+			  |> filter(fn: (r) => r["_measurement"] == "readings")
+			  |> filter(fn: (r) => r["_field"] == "delta" or r["_field"] == "kWh")
+			  |> filter(fn: (r) => r["type"] == "electricity_${params[1]}")
+			  |> aggregateWindow(every: ${params[2]}, fn: ${params[3]}, createEmpty: false)
+			  |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
+			  |> yield(name: "readings")
+		`;
+
+		const response = await query(client, flux);
+		const data = response.map(row => {
+			return {
+				date: row._time.split('T')[0],
+				time: row._time.split('T')[1].split(':').slice(0, 2).join(':'),
+				kWh: row.kWh,
+				delta: parseFloat(row.delta.toFixed(6)),
+				price: parseInt(kWh_to_CLP(row.delta).toFixed(0)),
+			}
+		});
+
+		reply.send({
+			'success': true,
+			params,
+			data,
+		});
 	});
-
-	reply.send({
-		'success': true,
-		data,
-	});
-});
-
-fastify.get('/data/month', async (req, reply) => {
-	const flux = `
-		from(bucket: "iot_sensors")
-		  |> range(start: -32d)
-		  |> filter(fn: (r) => r["_measurement"] == "readings")
-		  |> filter(fn: (r) => r["_field"] == "delta" or r["_field"] == "kWh")
-		  |> filter(fn: (r) => r["type"] == "electricity_daily")
-		  |> aggregateWindow(every: 24h, fn: mean, createEmpty: false)
-		  |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
-		  |> yield(name: "readings")
-	`;
-
-	const response = await query(client, flux);
-	const data = response.map(row => {
-		return {
-			date: row._time.split('T')[0],
-			time: row._time.split('T')[1].split(':').slice(0, 2).join(':'),
-			kWh: row.kWh,
-			delta: parseFloat(row.delta.toFixed(6)),
-			price: parseInt(kWh_to_CLP(row.delta).toFixed(0)),
-		}
-	});
-
-	reply.send({
-		'success': true,
-		data,
-	});
-});
-
-fastify.get('/data/all', async (req, reply) => {
-	const flux = `
-		from(bucket: "iot_sensors")
-		  |> range(start: 0)
-		  |> filter(fn: (r) => r["_measurement"] == "readings")
-		  |> filter(fn: (r) => r["_field"] == "delta" or r["_field"] == "kWh")
-		  |> filter(fn: (r) => r["type"] == "electricity_daily")
-		  |> aggregateWindow(every: 48h, fn: mean, createEmpty: false)
-		  |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
-		  |> yield(name: "readings")
-	`;
-
-	const response = await query(client, flux);
-	const data = response.map(row => {
-		return {
-			date: row._time.split('T')[0],
-			time: row._time.split('T')[1].split(':').slice(0, 2).join(':'),
-			kWh: row.kWh,
-			delta: parseFloat(row.delta.toFixed(6)),
-			price: parseInt(kWh_to_CLP(row.delta).toFixed(0)),
-		}
-	});
-
-	reply.send({
-		'success': true,
-		data,
-	});
-});
+}
 
 fastify.post('/data/range', { schema: schema['POST /data/range'] }, async (request, reply) => {
 	const start = request.body.start;
